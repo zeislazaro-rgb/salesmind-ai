@@ -17,6 +17,8 @@ function getLLM(): OpenAI | null {
   return llm;
 }
 
+const MAX_HISTORY = 10;
+
 export const chatRoute: FastifyPluginAsync = async (app) => {
   app.post('/chat', async (request, reply) => {
     const llm = getLLM();
@@ -26,15 +28,22 @@ export const chatRoute: FastifyPluginAsync = async (app) => {
       });
     }
 
-    const { message, conversationId, systemPrompt } = (request.body ?? {}) as {
-      message: string;
+    const { message, conversationId, systemPrompt, history } = (request.body ?? {}) as {
+      message?: string;
       conversationId?: string;
       systemPrompt?: string;
+      history?: { role: string; content: string }[];
     };
 
-    if (!message) {
+    if (typeof message !== 'string' || !message.trim()) {
       return reply.status(400).send({ error: 'Campo "message" é obrigatório' });
     }
+
+    // Histórico enviado pelo app (últimas mensagens), para a IA lembrar da conversa
+    const previous = (Array.isArray(history) ? history : [])
+      .filter(m => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string')
+      .slice(-MAX_HISTORY)
+      .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content.slice(0, 4000) }));
 
     try {
       const completion = await llm.chat.completions.create({
@@ -44,6 +53,7 @@ export const chatRoute: FastifyPluginAsync = async (app) => {
             role: 'system',
             content: systemPrompt || 'Você é o SalesMind AI, assistente inteligente de vendas. Responda sempre em português, seja objetivo e ajude o usuário a vender mais.'
           },
+          ...previous,
           { role: 'user', content: message }
         ],
         temperature: 0.7,

@@ -7,6 +7,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  isError?: boolean; // mensagens de erro não vão para o histórico da IA
 }
 
 // crypto.randomUUID só existe em HTTPS/localhost; no celular via IP da rede ele quebra
@@ -14,10 +15,11 @@ const newId = () => Math.random().toString(36).slice(2) + Date.now().toString(36
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', content: 'Olá! Sou o SalesMind AI, seu assistente de vendas. Como posso ajudar você hoje?', timestamp: new Date() }
+    { id: 'welcome', role: 'assistant', content: 'Olá! Sou o SalesMind AI, seu assistente de vendas. Como posso ajudar você hoje?', timestamp: new Date() }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -29,26 +31,34 @@ export default function Home() {
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
 
-    const text = input;
+    const text = input.trim();
+    const history = messages
+      .filter(m => !m.isError && m.id !== 'welcome')
+      .map(m => ({ role: m.role, content: m.content }));
     const userMsg: Message = { id: newId(), role: 'user', content: text, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
 
     try {
-      // Caminho relativo: o Next repassa /api/* para a API (ver next.config.js)
+      // Rota do próprio site (app/api/chat/route.ts): chama a IA ou repassa para a API
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ message: text, history, conversationId })
       });
       const data = await res.json().catch(() => ({}));
-      const content = res.ok
-        ? data.response || 'A IA não retornou resposta.'
-        : `Erro (${res.status}): ${data.error || 'API indisponível. Verifique se a API está rodando.'}${data.details ? `\n${data.details}` : ''}`;
-      setMessages(prev => [...prev, { id: newId(), role: 'assistant', content, timestamp: new Date() }]);
+      if (res.ok && data.response) {
+        if (data.conversationId) setConversationId(data.conversationId);
+        setMessages(prev => [...prev, { id: newId(), role: 'assistant', content: data.response, timestamp: new Date() }]);
+      } else {
+        const content = res.ok
+          ? 'A IA não retornou resposta.'
+          : `Erro (${res.status}): ${data.error || 'API indisponível. Verifique se a API está rodando.'}${data.details ? `\n${data.details}` : ''}`;
+        setMessages(prev => [...prev, { id: newId(), role: 'assistant', content, timestamp: new Date(), isError: true }]);
+      }
     } catch {
-      setMessages(prev => [...prev, { id: newId(), role: 'assistant', content: 'Erro de conexão. Verifique se a API está rodando.', timestamp: new Date() }]);
+      setMessages(prev => [...prev, { id: newId(), role: 'assistant', content: 'Erro de conexão. Verifique se a API está rodando.', timestamp: new Date(), isError: true }]);
     } finally {
       setLoading(false);
     }
@@ -69,10 +79,12 @@ export default function Home() {
             <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
               msg.role === 'user'
                 ? 'bg-[#0D7377] text-white rounded-br-none'
+                : msg.isError
+                ? 'bg-red-50 border border-red-200 text-red-800 rounded-bl-none'
                 : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
             }`}>
               <p className="whitespace-pre-wrap">{msg.content}</p>
-              <span className={`text-[10px] mt-1 block ${msg.role === 'user' ? 'opacity-70' : 'text-gray-400'}`}>
+              <span suppressHydrationWarning className={`text-[10px] mt-1 block ${msg.role === 'user' ? 'opacity-70' : 'text-gray-400'}`}>
                 {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
@@ -98,7 +110,7 @@ export default function Home() {
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && sendMessage()}
+          onKeyDown={e => e.key === 'Enter' && !e.nativeEvent.isComposing && sendMessage()}
           placeholder="Digite sua mensagem..."
           className="flex-1 border border-gray-300 rounded-full px-4 py-3 text-sm focus:outline-none focus:border-[#0D7377] focus:ring-1 focus:ring-[#0D7377]"
           disabled={loading}
@@ -106,6 +118,7 @@ export default function Home() {
         <button
           onClick={sendMessage}
           disabled={!input.trim() || loading}
+          aria-label="Enviar mensagem"
           className="bg-[#0D7377] text-white rounded-full w-12 h-12 flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">

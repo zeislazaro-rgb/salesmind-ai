@@ -41,14 +41,24 @@ Escolha **UMA** das opções abaixo. Todas têm plano gratuito generoso:
 
 ---
 
-## 2. Chave da Vercel (OPCIONAL — Hospedagem do Frontend)
+## 2. Publicar o site na Vercel
 
-Só necessária quando quiser publicar o app online:
-1. Acesse https://vercel.com
-2. Login com GitHub
-3. Importe o repositório e defina **Root Directory** = `apps/web`
-4. Deploy automático a cada push
-5. **Custo:** $0 (plano Hobby é gratuito para projetos pessoais)
+Dá para fazer tudo pelo celular. O site já conversa com a IA sozinho, sem precisar publicar a API.
+
+1. Acesse https://vercel.com e entre com **Continue with GitHub**
+2. **Add New → Project** e escolha o repositório `salesmind-ai`
+3. Em **Root Directory**, clique em *Edit* e escolha `apps/web`
+4. Abra **Environment Variables** e adicione:
+   - `LLM_API_KEY` = sua chave
+   - `LLM_BASE_URL` = `https://api.deepseek.com/v1` (ou a do seu provedor)
+   - `LLM_MODEL` = `deepseek-chat` (ou o do seu provedor)
+5. Clique em **Deploy** e aguarde 1–2 minutos
+6. Abra o link gerado (ex.: `salesmind-ai.vercel.app`) no celular. Para instalar como app: menu do navegador → **Adicionar à tela inicial**
+
+A cada push na `main`, a Vercel publica a nova versão sozinha.
+**Custo:** $0 (plano Hobby)
+
+> A chave fica só no painel da Vercel, nunca no código. Se uma chave já foi parar no GitHub, revogue-a no provedor e gere outra.
 
 ---
 
@@ -75,11 +85,13 @@ Na **pasta raiz** do repositório (onde fica o `package.json`):
 npm install
 cp .env.example .env
 # Edite .env com sua chave da DeepSeek/SiliconFlow
-npm run dev
+npm run dev:web
 ```
 
 Acesse http://localhost:3000 no navegador. No celular (mesma rede Wi-Fi), use o IP do computador, ex.: http://192.168.0.10:3000.
-No GitHub Codespaces, abra a porta 3000 que aparece na aba "Portas" — só ela precisa ficar acessível.
+No GitHub Codespaces, abra a porta 3000 que aparece na aba "Portas".
+
+Para subir também a API separada: `npm run dev` e defina `API_INTERNAL_URL=http://localhost:3001` no `.env`.
 
 ---
 
@@ -89,8 +101,7 @@ No GitHub Codespaces, abra a porta 3000 que aparece na aba "Portas" — só ela 
 |-------|----------|-------------|-------|
 | DeepSeek / SiliconFlow | IA responder mensagens | SIM | Grátis |
 | Vercel | Publicar site/app online | Não (só pra deploy) | Grátis |
-| Supabase | Salvar dados e login | Não (MVP funciona sem) | Grátis |
+| Supabase | Salvar dados e login (ainda não integrado) | Não | Grátis |
 | Syncro | WhatsApp automação | Já tem | Grátis |
 
-#
-**Comece pela chave da DeepSeek.** É a única essencial para o assistente funcionar hoje
+**Comece pela chave da DeepSeek.** É a única essencial para o assistente funcionar hoje.

@@ -1,4 +1,5 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyRequest, FastifyReply } from 'fastify';
+import { isOwner } from '../lib/auth.js';
 
 // Políticas por plano — owner tem bypass total
 const PLAN_POLICIES: Record<string, any> = {
@@ -53,11 +54,9 @@ export async function policyGuard(request: FastifyRequest, reply: FastifyReply) 
   }
 
   // TODO: Buscar role e plano do banco (Supabase)
-  // Por enquanto, simula com header x-user-role para teste
-  const role = request.headers['x-user-role'] as string || 'user';
-
-  let policy;
-  if (role === 'owner') {
+  // Owner é validado pelo token secreto (x-admin-token), nunca por um header livre
+  let policy: any;
+  if (isOwner(request)) {
     policy = OWNER_POLICY;
   } else {
     // TODO: Buscar plano real do tenant no DB
