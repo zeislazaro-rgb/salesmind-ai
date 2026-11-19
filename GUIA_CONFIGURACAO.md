@@ -90,4 +90,5 @@ Acesse http://localhost:3000 no navegador ou celular (mesma rede Wi-Fi).
 | Supabase | Salvar dados e login | Não (MVP funciona sem) | Grátis |
 | Syncro | WhatsApp automação | Já tem | Grátis |
 
-**Comece pela chave da DeepSeek.** É a única essencial para o assistente funcionar hoje.
+#
+**Comece pela chave da DeepSeek.** É a única essencial para o assistente funcionar hoje

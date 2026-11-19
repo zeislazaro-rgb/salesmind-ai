@@ -1,0 +1,23 @@
+{
+  "name": "salesmind-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SalesMind AI - Plataforma SaaS de Automação Inteligente com LLM Open-Source",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:api": "cd apps/api && npm run dev",
+    "build": "turbo run build",
+    "start": "turbo run start"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0"
+  },
+  "packageManager": "npm@10.9.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
