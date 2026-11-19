@@ -46,7 +46,7 @@ Escolha **UMA** das opções abaixo. Todas têm plano gratuito generoso:
 Só necessária quando quiser publicar o app online:
 1. Acesse https://vercel.com
 2. Login com GitHub
-3. Importe o repositório `salesmind-ai/apps/web`
+3. Importe o repositório e defina **Root Directory** = `apps/web`
 4. Deploy automático a cada push
 5. **Custo:** $0 (plano Hobby é gratuito para projetos pessoais)
 
@@ -69,15 +69,17 @@ Para salvar conversas, leads e usuários:
 
 ## 4. Rodar Localmente (Sem nenhuma chave de hospedagem)
 
+Na **pasta raiz** do repositório (onde fica o `package.json`):
+
 ```bash
-cd salesmind-ai
 npm install
 cp .env.example .env
 # Edite .env com sua chave da DeepSeek/SiliconFlow
 npm run dev
 ```
 
-Acesse http://localhost:3000 no navegador ou celular (mesma rede Wi-Fi).
+Acesse http://localhost:3000 no navegador. No celular (mesma rede Wi-Fi), use o IP do computador, ex.: http://192.168.0.10:3000.
+No GitHub Codespaces, abra a porta 3000 que aparece na aba "Portas" — só ela precisa ficar acessível.
 
 ---
 

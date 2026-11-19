@@ -9,6 +9,9 @@ interface Message {
   timestamp: Date;
 }
 
+// crypto.randomUUID só existe em HTTPS/localhost; no celular via IP da rede ele quebra
+const newId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
     { id: '1', role: 'assistant', content: 'Olá! Sou o SalesMind AI, seu assistente de vendas. Como posso ajudar você hoje?', timestamp: new Date() }
@@ -26,22 +29,26 @@ export default function Home() {
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
 
-    const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content: input, timestamp: new Date() };
+    const text = input;
+    const userMsg: Message = { id: newId(), role: 'user', content: text, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/chat`, {
+      // Caminho relativo: o Next repassa /api/* para a API (ver next.config.js)
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input })
+        body: JSON.stringify({ message: text })
       });
-      const data = await res.json();
-      const aiMsg: Message = { id: crypto.randomUUID(), role: 'assistant', content: data.response || 'Desculpe, ocorreu um erro.', timestamp: new Date() };
-      setMessages(prev => [...prev, aiMsg]);
+      const data = await res.json().catch(() => ({}));
+      const content = res.ok
+        ? data.response || 'A IA não retornou resposta.'
+        : `Erro (${res.status}): ${data.error || 'API indisponível. Verifique se a API está rodando.'}${data.details ? `\n${data.details}` : ''}`;
+      setMessages(prev => [...prev, { id: newId(), role: 'assistant', content, timestamp: new Date() }]);
     } catch {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: 'Erro de conexão. Verifique se a API está rodando.', timestamp: new Date() }]);
+      setMessages(prev => [...prev, { id: newId(), role: 'assistant', content: 'Erro de conexão. Verifique se a API está rodando.', timestamp: new Date() }]);
     } finally {
       setLoading(false);
     }
