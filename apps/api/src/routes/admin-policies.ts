@@ -1,13 +1,13 @@
-import { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
+import { isOwner } from '../lib/auth.js';
 
-// Rota exclusiva para owner do SaaS gerenciar políticas de usuários
-// Protegida por verificação de role=owner no header (em produção, validar via JWT/Supabase)
+// Rotas exclusivas para o owner do SaaS gerenciar políticas de usuários.
+// Exigem o header x-admin-token (ver lib/auth.ts).
 export const adminPoliciesRoute: FastifyPluginAsync = async (app) => {
 
   // GET /admin/policies/:tenantId — Owner vê política de qualquer tenant
   app.get('/admin/policies/:tenantId', async (request, reply) => {
-    const requesterRole = request.headers['x-user-role'] as string;
-    if (requesterRole !== 'owner') {
+    if (!isOwner(request)) {
       return reply.status(403).send({ error: 'Acesso negado. Apenas owner do SaaS.' });
     }
 
@@ -34,13 +34,12 @@ export const adminPoliciesRoute: FastifyPluginAsync = async (app) => {
 
   // PUT /admin/policies/:tenantId — Owner atualiza política de qualquer tenant
   app.put('/admin/policies/:tenantId', async (request, reply) => {
-    const requesterRole = request.headers['x-user-role'] as string;
-    if (requesterRole !== 'owner') {
+    if (!isOwner(request)) {
       return reply.status(403).send({ error: 'Acesso negado. Apenas owner do SaaS.' });
     }
 
     const tenantId = (request.params as any).tenantId;
-    const body = request.body as Record<string, any>;
+    const body = (request.body ?? {}) as Record<string, any>;
 
     // Validação básica dos campos permitidos
     const allowedFields = [
@@ -77,8 +76,7 @@ export const adminPoliciesRoute: FastifyPluginAsync = async (app) => {
 
   // POST /admin/policies/:tenantId/reset — Owner reseta política para padrão do plano
   app.post('/admin/policies/:tenantId/reset', async (request, reply) => {
-    const requesterRole = request.headers['x-user-role'] as string;
-    if (requesterRole !== 'owner') {
+    if (!isOwner(request)) {
       return reply.status(403).send({ error: 'Acesso negado. Apenas owner do SaaS.' });
     }
 

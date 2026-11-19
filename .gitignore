@@ -11,7 +11,8 @@ out/
 .env.local
 .env.*.local
 
-#.vscode/
+.vscode/*
+!.vscode/launch.json
 .idea/
 *.swp
 *.swo
@@ -29,6 +30,9 @@ npm-debug.log*
 
 # Testing
 coverage/
+
+# Arquivos compactados (não versionar cópias do projeto)
+*.zip
 
 # Misc
 *.tsbuildinfo

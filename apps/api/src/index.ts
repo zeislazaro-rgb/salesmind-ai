@@ -1,11 +1,9 @@
+import './env.js'; // precisa ser o primeiro import
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import dotenv from 'dotenv';
 import { chatRoute } from './routes/chat.js';
 import { healthRoute } from './routes/health.js';
 import { adminPoliciesRoute } from './routes/admin-policies.js';
-
-dotenv.config();
 
 const app = Fastify({ logger: true });
 

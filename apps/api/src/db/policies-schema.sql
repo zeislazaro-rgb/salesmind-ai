@@ -1,8 +1,21 @@
 -- Schema de políticas de uso diferenciadas por tenant
 -- Owner (tenant_id = '00000000-0000-0000-0000-000000000001') tem bypass total via aplicação
+-- Pode ser executado mais de uma vez sem erro (idempotente).
+
+-- Tabela de tenants (empresas clientes do SaaS)
+CREATE TABLE IF NOT EXISTS tenants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tenant do owner do SaaS
+INSERT INTO tenants (id, name)
+VALUES ('00000000-0000-0000-0000-000000000001', 'Owner SalesMind')
+ON CONFLICT (id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS tenant_policies (
-  tenant_id UUID PRIMARY KEY REFERENCES tenants(id),
+  tenant_id UUID PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
   plan VARCHAR(50) NOT NULL DEFAULT 'free',
 
   -- Limites quantitativos (-1 = ilimitado)
@@ -52,6 +65,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_tenant_policies_updated_at ON tenant_policies;
 CREATE TRIGGER trg_tenant_policies_updated_at
   BEFORE UPDATE ON tenant_policies
   FOR EACH ROW EXECUTE FUNCTION update_tenant_policies_updated_at();
