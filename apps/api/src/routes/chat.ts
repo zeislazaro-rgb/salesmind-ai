@@ -1,15 +1,32 @@
 import { FastifyPluginAsync } from 'fastify';
 import OpenAI from 'openai';
 
+import { randomUUID } from 'node:crypto';
+
 // Usa API compatível com OpenAI — funciona com DeepSeek, Qwen, SiliconFlow, Together.ai
-const llm = new OpenAI({
-  apiKey: process.env.LLM_API_KEY || '',
-  baseURL: process.env.LLM_BASE_URL || 'https://api.deepseek.com/v1'
-});
+// O cliente é criado sob demanda, depois que o .env já foi carregado.
+let llm: OpenAI | null = null;
+function getLLM(): OpenAI | null {
+  if (!process.env.LLM_API_KEY) return null;
+  if (!llm) {
+    llm = new OpenAI({
+      apiKey: process.env.LLM_API_KEY,
+      baseURL: process.env.LLM_BASE_URL || 'https://api.deepseek.com/v1'
+    });
+  }
+  return llm;
+}
 
 export const chatRoute: FastifyPluginAsync = async (app) => {
   app.post('/chat', async (request, reply) => {
-    const { message, conversationId, systemPrompt } = request.body as {
+    const llm = getLLM();
+    if (!llm) {
+      return reply.status(500).send({
+        error: 'LLM_API_KEY não configurada. Copie .env.example para .env e preencha sua chave.'
+      });
+    }
+
+    const { message, conversationId, systemPrompt } = (request.body ?? {}) as {
       message: string;
       conversationId?: string;
       systemPrompt?: string;
@@ -37,7 +54,7 @@ export const chatRoute: FastifyPluginAsync = async (app) => {
         response: completion.choices[0]?.message?.content || '',
         model: completion.model,
         usage: completion.usage,
-        conversationId: conversationId || crypto.randomUUID()
+        conversationId: conversationId || randomUUID()
       };
     } catch (err: any) {
       app.log.error(err);

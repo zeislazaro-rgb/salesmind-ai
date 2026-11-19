@@ -4,8 +4,7 @@ import type { Metadata, Viewport } from 'next';
 export const metadata: Metadata = {
   title: 'SalesMind AI',
   description: 'Assistente inteligente de vendas com IA open-source',
-  manifest: '/manifest.json',
-  themeColor: '#0D7377'
+  manifest: '/manifest.json'
 };
 
 export const viewport: Viewport = {

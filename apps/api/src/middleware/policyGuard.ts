@@ -75,7 +75,7 @@ export async function policyGuard(request: FastifyRequest, reply: FastifyReply) 
   }
 
   // Verifica janela de horário WhatsApp (apenas para não-owners)
-  if (!policy.isOwner && feature.includes('whatsapp') || feature.includes('outreach')) {
+  if (!policy.isOwner && (feature.includes('whatsapp') || feature.includes('outreach'))) {
     const hour = new Date().getHours();
     if (hour < policy.whatsappWindowHours.start || hour >= policy.whatsappWindowHours.end) {
       return reply.status(403).send({

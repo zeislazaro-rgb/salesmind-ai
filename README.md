@@ -28,9 +28,12 @@ salesmind-ai/
 ## Começar
 
 ```bash
+cp .env.example .env   # depois preencha LLM_API_KEY
 npm install
-npm run dev
+npm run dev            # sobe web (localhost:3000) e API (localhost:3001)
 ```
+
+Para rodar separado: `npm run dev:api` e `npm run dev:web`.
 
 ## Custos
 
